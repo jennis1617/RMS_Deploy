@@ -38,14 +38,20 @@ from backend.sharepoint import (
 app = FastAPI(title="NexTurn Resume Screening API", version="1.0.0")
 
 # Allow React dev server
+# Updated CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:5173", 
+        "http://localhost:3000",
+        "https://rms-deploy-jennis1617.vercel.app", # <--- Add your specific Vercel URL here
+        # Pro tip: You can also use a wildcard if you have multiple preview URLs:
+        # "https://rms-deploy-git-dev-branch-jennis1617s-projects.vercel.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # Initialise OpenAI client once
 _client = None
 
