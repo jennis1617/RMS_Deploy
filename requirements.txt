@@ -1,0 +1,38 @@
+# requirements.txt
+
+# Web framework 
+fastapi==0.111.0
+uvicorn==0.29.0
+
+# AI 
+openai>=1.30.0
+
+# Microsoft auth + SharePoint 
+msal>=1.28.0
+requests>=2.31.0
+
+# Document parsing
+PyPDF2>=3.0.1
+docx2txt>=0.8
+python-docx>=1.1.0
+
+# Document generation
+python-pptx>=0.6.23
+
+# PDF reading for JDs uploaded to SharePoint 
+pdfplumber>=0.10.0
+
+# Data 
+pandas>=2.1.4
+
+# Image handling 
+Pillow>=10.1.0
+
+# Environment variables 
+python-dotenv>=1.0.0
+
+# XML 
+lxml>=5.1.0
+
+# File upload support for FastAPI
+python-multipart>=0.0.9
