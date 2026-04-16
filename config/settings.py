@@ -141,7 +141,17 @@ Responsibilities:
 - Security and compliance"""
 }
 
-# Column Display Names
+# --- Add this to your existing settings.py ---
+
+# Scoring Weights (Total must equal 100)
+SCORING_WEIGHTS = {
+    "skills_match": 40,
+    "experience_match": 30,
+    "projects_match": 20,
+    "domain_match": 10
+}
+
+# Column Display Names (Existing)
 COLUMN_DISPLAY_NAMES = {
     'name': 'Candidate Name',
     'email': 'Email Address',
@@ -154,5 +164,6 @@ COLUMN_DISPLAY_NAMES = {
     'certifications': 'Certifications',
     'domain_expertise': 'Domain Expertise',
     'submission_date': 'Submission Date',
-    'filename': 'Resume File'
+    'filename': 'Resume File',
+    'ai_match_score': 'AI Match %' # Added for the final calculated score
 }

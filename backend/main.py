@@ -74,6 +74,13 @@ def _sp_config():
 @app.get("/api/health")
 def health():
     return {"status": "ok", "timestamp": datetime.utcnow().isoformat()}
+@app.get("/")
+def root():
+    return {
+        "message": "NexTurn Resume Screening API is running 🚀",
+        "docs": "/docs",
+        "health": "/api/health"
+    }
 
 
 # SharePoint status
@@ -250,6 +257,8 @@ def score_candidates(req: ScoreRequest):
 def _score_single(client, candidate_data: dict, job_desc: str):
     from backend.openai_client import create_openai_completion
     import json as _json
+    
+    # 1. Prepare candidate summary
     summary = (
         f"Name: {candidate_data.get('name', 'N/A')}\n"
         f"Experience: {candidate_data.get('experience_years', 'N/A')} years\n"
@@ -259,17 +268,16 @@ def _score_single(client, candidate_data: dict, job_desc: str):
         f"Projects: {str(candidate_data.get('key_projects', ''))[:400]}\n"
         f"Certifications: {candidate_data.get('certifications', 'None')}"
     )
+
+    # 2. Updated Prompt (telling AI to just provide the raw data)
     prompt = (
-        "You are an expert technical recruiter. Score this candidate against the job description "
-        "on a scale of 0–100. Be accurate and critical — do not inflate scores.\n\n"
+        "You are an expert technical recruiter. Evaluate the candidate against the job description.\n\n"
         f"JOB DESCRIPTION:\n{job_desc[:2000]}\n\n"
         f"CANDIDATE:\n{summary}\n\n"
-        "Dimensions: skills_match (40%), experience_match (30%), "
-        "projects_match (20%), domain_match (10%).\n"
-        "Also give a one-sentence reason for the overall score.\n\n"
-        'Return ONLY JSON: {"skills_match":<int>,"experience_match":<int>,'
-        '"projects_match":<int>,"domain_match":<int>,"overall":<int>,"reason":"<str>"}'
+        "Return ONLY JSON: {\"skills_match\":<int>,\"experience_match\":<int>,"
+        "\"projects_match\":<int>,\"domain_match\":<int>,\"reason\":\"<str>\"}"
     )
+
     try:
         resp = create_openai_completion(
             client,
@@ -283,20 +291,27 @@ def _score_single(client, candidate_data: dict, job_desc: str):
         )
         raw = resp.choices[0].message.content.strip()
         data = _json.loads(raw[raw.find("{"):raw.rfind("}") + 1])
+
+        # 3. Capture the raw category scores
         bd = {
             "Skills Match":       max(0, min(100, int(data.get("skills_match", 0)))),
             "Experience Match":   max(0, min(100, int(data.get("experience_match", 0)))),
             "Projects Match":     max(0, min(100, int(data.get("projects_match", 0)))),
             "Domain & Education": max(0, min(100, int(data.get("domain_match", 0)))),
         }
-        overall = max(0, min(100, int(data.get("overall", 0))))
-        if overall == 0:
-            overall = round(
-                bd["Skills Match"] * 0.4 + bd["Experience Match"] * 0.3
-                + bd["Projects Match"] * 0.2 + bd["Domain & Education"] * 0.1
-            )
+
+        # 4. FORCE python to calculate the final score (The Fix)
+        # We ignore 'overall' from the JSON and calculate it ourselves
+        overall = round(
+            (bd["Skills Match"] * 0.40) + 
+            (bd["Experience Match"] * 0.30) + 
+            (bd["Projects Match"] * 0.20) + 
+            (bd["Domain & Education"] * 0.10)
+        )
+
         return overall, bd, str(data.get("reason", ""))
-    except Exception:
+    except Exception as e:
+        print(f"Error in scoring: {e}")
         return 0, {}, ""
 
 
